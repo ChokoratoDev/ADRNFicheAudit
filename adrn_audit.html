@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ADRN Audit">
+<meta name="theme-color" content="#1A237E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADRN AUDIT — Fiche de reconditionnement</title>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Courier New',Courier,monospace;background:#F0F2F5;color:#1A1A2E;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0A0C10}::-webkit-scrollbar-thumb{background:#2D3748;border-radius:3px}
+input,textarea,select,button{font-family:inherit}
+a{color:#4A90D9}
+
+/* ── TOP BAR ──────────────────────────────────────────────── */
+#topbar{position:sticky;top:0;z-index:200;background:#1A237E;border-bottom:2px solid #0D1547;padding:10px 20px;display:flex;align-items:center;gap:14px}
+#logo{font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#fff;white-space:nowrap;font-weight:700}
+#progbar-wrap{flex:1;height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden}
+#progbar{height:100%;width:0%;background:linear-gradient(90deg,#4A90D9,#22C55E);border-radius:3px;transition:width .4s}
+#pct{font-size:11px;color:rgba(255,255,255,.75);white-space:nowrap}
+.topbtn{cursor:pointer;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:8px 18px;border-radius:7px;font-size:13px;letter-spacing:1px;transition:all .2s}
+.topbtn:hover{border-color:#fff;color:#fff;background:rgba(255,255,255,.22)}
+.topbtn.active{background:rgba(255,255,255,.25);border-color:#fff;color:#fff}
+.topbtn.saved{background:rgba(134,239,172,.25);border-color:#4ADE80;color:#fff}
+
+/* ── PHASE NAV ────────────────────────────────────────────── */
+#phasenav{background:#E8EAF6;border-bottom:2px solid #C5CAE9;padding:8px 20px;display:flex;gap:4px;overflow-x:auto}
+.pnav{cursor:pointer;background:none;border:none;color:#3949AB;font-weight:600;padding:8px 14px;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .2s;min-width:90px}
+.pnav:hover{color:#1A237E}
+.pnav.active{color:#1A237E;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12);font-weight:800}
+.pnav .picon{font-size:22px}
+.pnav .plabel{font-size:13px;letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.pnav .pbar-w{width:36px;height:3px;background:#C5CAE9;border-radius:2px;overflow:hidden}
+.pnav .pbar{height:100%;width:0%;border-radius:2px;transition:width .3s}
+
+/* ── CONTENT ──────────────────────────────────────────────── */
+#content{max-width:860px;margin:0 auto;padding:24px 20px}
+.phase-hdr{display:flex;align-items:center;gap:16px;margin-bottom:28px;padding:14px 18px;background:#fff;border-radius:10px;border:1px solid #C5CAE9}
+.phase-num{font-size:62px;line-height:1;opacity:.25;font-weight:700}
+.phase-title{font-size:30px;letter-spacing:3px;font-weight:700}
+.phase-meta{font-size:13px;color:#3949AB;font-weight:500;margin-top:3px}
+
+/* ── SECTION CARD ─────────────────────────────────────────── */
+.section{background:#fff;border:1px solid #C5CAE9;border-radius:10px;margin-bottom:14px;overflow:hidden}
+.section-hdr{padding:11px 18px;background:#F5F7FF;border-bottom:1px solid #C5CAE9;display:flex;align-items:center;gap:8px}
+.section-stripe{width:3px;height:18px;border-radius:2px}
+.section-title{font-size:15px;letter-spacing:2px;color:#1A237E;font-weight:800;font-weight:700;text-transform:uppercase}
+.section-body{padding:20px 22px}
+
+/* ── FIELD ────────────────────────────────────────────────── */
+.field{margin-bottom:16px}
+.field-label{display:block;font-size:13px;color:#1A237E;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
+.fi{background:#fff;border:1.5px solid #9FA8DA;border-radius:6px;color:#111827;font-weight:500;padding:11px 15px;width:100%;font-size:15px;transition:border-color .2s,box-shadow .2s;outline:none}
+.fi:focus{border-color:#3F51B5;box-shadow:0 0 0 2px rgba(63,81,181,.12)}
+.fi::placeholder{color:#7986CB}
+textarea.fi{resize:vertical}
+
+/* ── YN3 ──────────────────────────────────────────────────── */
+.yn3{display:flex;gap:8px;flex-wrap:wrap}
+.ynb{cursor:pointer;border:2px solid #7986CB;background:#fff;color:#283593;font-weight:600;padding:10px 22px;border-radius:8px;font-size:16px;transition:all .15s}
+.ynb.yes{border-color:#2E7D32;background:#E8F5E9;color:#1B5E20;font-weight:700}
+.ynb.no{border-color:#C62828;background:#FFEBEE;color:#B71C1C;font-weight:700}
+.ynb.na{border-color:#5C6BC0;background:#E8EAF6;color:#283593;font-weight:700}
+
+/* ── RADIO / CHECK ────────────────────────────────────────── */
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt-btn{cursor:pointer;border:2px solid #9FA8DA;background:#fff;color:#283593;font-weight:500;padding:11px 18px;border-radius:8px;font-size:16px;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.opt-btn.radio-active{border-color:#E65100;background:#FFF3E0;color:#BF360C;font-weight:700}
+.opt-btn.check-active{border-color:#1565C0;background:#E3F2FD;color:#0D47A1;font-weight:700}
+
+/* ── PORT TABLE ───────────────────────────────────────────── */
+.port-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F5F7FF;border-radius:8px;border:1px solid #C5CAE9;margin-bottom:5px}
+.port-name{flex:1;font-size:18px;color:#1A237E;font-weight:600}
+.port-btn{cursor:pointer;font-size:16px;padding:8px 16px;border-radius:6px;border:2px solid #9FA8DA;background:#fff;color:#283593;font-weight:600;transition:all .15s}
+.port-btn.ok{border-color:#2E7D32;background:#E8F5E9;color:#1B5E20;font-weight:700}
+.port-btn.ko{border-color:#C62828;background:#FFEBEE;color:#B71C1C;font-weight:700}
+.port-note{background:#fff;border:1.5px solid #9FA8DA;color:#1A237E;font-size:14px;padding:6px 10px;border-radius:4px;color:#94A3B8;padding:4px 8px;font-size:10px;width:100px;outline:none}
+
+/* ── TOOLS PANEL ──────────────────────────────────────────── */
+#tools-section{background:#fff;border:1px solid #1E293B;border-radius:10px;margin-bottom:14px;overflow:hidden}
+#tools-body{padding:16px 18px;display:none}
+#tools-body.open{display:block}
+.tool-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tool-tab{cursor:pointer;background:#E8EAF6;border:2px solid #9FA8DA;color:#1A237E;font-weight:700;font-size:15px;padding:9px 20px;border-radius:7px;letter-spacing:1px;text-transform:uppercase;transition:all .15s}
+.tool-tab.active{background:#3F51B5;border-color:#3F51B5;color:#fff}
+.tool-row{display:flex;gap:14px;align-items:flex-start;padding:12px 16px;background:#F5F7FF;border-radius:8px;border:1px solid #C5CAE9;margin-bottom:8px}
+.tool-plat{width:130px;min-width:130px;font-size:16px;color:#1A237E;font-weight:700;display:flex;align-items:center;gap:7px}
+.tool-plat-name{font-weight:700;font-size:15px;letter-spacing:1px;text-transform:uppercase}
+.tool-tags{display:flex;gap:8px;flex-wrap:wrap;flex:1;align-items:flex-start}
+.tool-tag{background:#E8EAF6;border:2px solid #7986CB;color:#1A237E;font-weight:600;font-size:14px;padding:6px 12px;border-radius:6px;white-space:normal;word-break:break-word}
+
+/* ── NAV BUTTONS ──────────────────────────────────────────── */
+#navbtns{display:flex;gap:10px;justify-content:space-between;align-items:center;padding-top:8px;margin-bottom:30px}
+.navbtn{cursor:pointer;padding:12px 30px;border-radius:9px;font-size:14px;letter-spacing:1px;font-weight:700;transition:all .2s;border:2px solid #9FA8DA;background:#fff;color:#283593}
+.navbtn:disabled{cursor:not-allowed;color:#C5CAE9;border-color:#E8EAF6}
+.navbtn.next{border-color:var(--phase-color);color:var(--phase-color);background:rgba(0,0,0,.1)}
+.navbtn.export-btn{border-color:#22C55E;color:#4ADE80;background:rgba(34,197,94,.1)}
+#phase-indicator{font-size:11px;color:#3949AB;font-weight:600}
+
+/* ── EXPORT PANEL ─────────────────────────────────────────── */
+#export-panel{background:#fff;border-bottom:2px solid #C5CAE9;padding:20px;max-height:420px;overflow-y:auto;display:none}
+#export-panel.open{display:block}
+#export-title{font-size:16px;letter-spacing:3px;color:#1A237E;margin-bottom:16px;font-weight:700}
+.exp-section{margin-bottom:12px}
+.exp-section-hdr{color:#3949AB;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;font-weight:700}
+.exp-row{display:flex;gap:8px;margin-bottom:3px;padding:8px 12px;background:#F5F7FF;border:1px solid #E8EAF6;border-radius:5px;font-size:13px}
+.exp-label{color:#283593;font-weight:600;min-width:200px;flex-shrink:0;font-size:12px}
+.exp-val{color:#1A1A2E;font-weight:500}
+#dl-btn{cursor:pointer;background:rgba(74,144,217,.15);border:1px solid #4A90D9;color:#7EC8E3;padding:8px 20px;border-radius:6px;font-size:11px;margin-top:10px;letter-spacing:1px}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media(max-width:600px){
+  #logo{font-size:14px;letter-spacing:2px}
+  .topbtn{padding:5px 9px;font-size:10px}
+  #content{padding:16px 12px}
+  .phase-num{font-size:36px}
+  .phase-title{font-size:20px}
+}
+
+/* ── TOUCH & RESPONSIVE OPTIMIZATIONS ─────────────────────── */
+
+/* Prevent double-tap zoom on buttons */
+button, input, textarea, select {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(63,81,181,0.15);
+}
+
+/* Minimum touch target size (44px recommended by Apple/Google) */
+.ynb, .opt-btn, .port-btn, .navbtn, .topbtn, .tool-tab, .pnav {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── TABLET (≤ 900px) ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  #content { padding: 16px 12px; }
+
+  /* Phase nav: icons bigger, more padding */
+  .pnav { padding: 10px 10px; min-width: 75px; }
+  .pnav .picon { font-size: 26px; }
+  .pnav .plabel { font-size: 11px; }
+
+  /* Phase header */
+  .phase-num { font-size: 48px; }
+  .phase-title { font-size: 24px; }
+
+  /* Section cards */
+  .section-body { padding: 16px 14px; }
+
+  /* Fields: full width stacked */
+  .field { margin-bottom: 20px; }
+  .field-label { font-size: 13px; margin-bottom: 10px; }
+  .fi { font-size: 16px; padding: 13px 14px; }
+
+  /* YN buttons: bigger, full row */
+  .yn3 { gap: 10px; }
+  .ynb { font-size: 17px; padding: 12px 22px; flex: 1; text-align: center; justify-content: center; min-height: 50px; }
+
+  /* Option buttons: bigger touch targets */
+  .opts { gap: 10px; }
+  .opt-btn { font-size: 16px; padding: 12px 18px; min-height: 50px; }
+
+  /* Port rows: stack on small tablet */
+  .port-row { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .port-name { width: 100%; font-size: 16px; margin-bottom: 4px; }
+  .port-btn { font-size: 16px; padding: 10px 18px; flex: 1; min-height: 48px; }
+  .port-note { width: 100%; font-size: 14px; padding: 8px 10px; margin-top: 4px; }
+
+  /* Nav buttons */
+  .navbtn { font-size: 15px; padding: 13px 24px; }
+
+  /* Top bar */
+  #logo { font-size: 18px; }
+  .topbtn { font-size: 13px; padding: 9px 14px; }
+
+  /* Tools */
+  .tool-tab { font-size: 14px; padding: 10px 16px; min-height: 48px; }
+  .tool-tag { font-size: 14px; padding: 7px 12px; }
+  .tool-plat { font-size: 15px; width: 120px; min-width: 120px; }
+}
+
+/* ── SMALL TABLET / LARGE PHONE (≤ 680px) ─────────────────── */
+@media (max-width: 680px) {
+  /* Top bar: compact */
+  #topbar { padding: 8px 12px; gap: 8px; }
+  #logo { font-size: 15px; letter-spacing: 2px; }
+  .topbtn { font-size: 12px; padding: 8px 10px; letter-spacing: 0; }
+  #progbar-wrap { min-width: 40px; }
+
+  /* Phase nav: icônes only + mini label */
+  #phasenav { padding: 6px 10px; gap: 2px; }
+  .pnav { min-width: 60px; padding: 7px 6px; }
+  .pnav .picon { font-size: 24px; }
+  .pnav .plabel { font-size: 9px; letter-spacing: 0; }
+
+  /* Phase header */
+  .phase-num { font-size: 38px; }
+  .phase-title { font-size: 20px; letter-spacing: 1px; }
+  .phase-meta { font-size: 12px; }
+
+  /* Sections */
+  .section-hdr { padding: 10px 14px; }
+  .section-title { font-size: 13px; letter-spacing: 1px; }
+  .section-body { padding: 14px 12px; }
+
+  /* Fields */
+  .field-label { font-size: 12px; }
+  .fi { font-size: 16px; padding: 12px 12px; }
+
+  /* YN: stack in column on very small */
+  .yn3 { flex-direction: row; }
+  .ynb { font-size: 16px; padding: 11px 14px; }
+
+  /* Opts: 2 per row max */
+  .opt-btn { font-size: 15px; padding: 11px 14px; }
+
+  /* Nav buttons: full width row */
+  #navbtns { flex-wrap: wrap; gap: 8px; }
+  .navbtn { flex: 1; text-align: center; font-size: 14px; padding: 13px 12px; }
+  #phase-indicator { width: 100%; text-align: center; order: -1; }
+
+  /* Tools: stack plat + tags vertically */
+  .tool-row { flex-direction: column; gap: 8px; }
+  .tool-plat { width: 100%; font-size: 15px; }
+  .tool-tags { width: 100%; }
+  .tool-tag { font-size: 14px; padding: 8px 12px; }
+  .tool-tab { font-size: 13px; padding: 9px 14px; }
+
+  /* Export panel */
+  .exp-label { min-width: 140px; font-size: 12px; }
+  .exp-row { font-size: 12px; flex-wrap: wrap; }
+}
+
+/* ── LARGE TABLET / LANDSCAPE (≥ 1024px) ──────────────────── */
+@media (min-width: 1024px) {
+  #content { padding: 28px 24px; }
+
+  /* Two-column layout for option buttons on wide screens */
+  .opts { gap: 10px; }
+  .opt-btn { font-size: 16px; }
+
+  .tool-row { padding: 14px 20px; }
+  .tool-tag { font-size: 15px; padding: 8px 14px; }
+}
+
+/* ── PRINT ─────────────────────────────────────────────────── */
+@media print {
+  #topbar, #phasenav, #navbtns, #tools-section, #export-panel { display: none !important; }
+  .section { break-inside: avoid; }
+  body { background: white; color: black; }
+}
+
+</style>
+<link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkFEUk4gQXVkaXQg4oCUIFJlY29uZGl0aW9ubmVtZW50IiwKICAic2hvcnRfbmFtZSI6ICJBRFJOIEF1ZGl0IiwKICAiZGVzY3JpcHRpb24iOiAiRmljaGUgZCdhdWRpdCByZWNvbmRpdGlvbm5lbWVudCBudW3DqXJpcXVlIOKAlCBQaGFzZXMgMSwgMiwgMyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxQTIzN0UiLAogICJ0aGVtZV9jb2xvciI6ICIjMUEyMzdFIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLDxzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTkyIDE5Mic+PHJlY3Qgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInIHJ4PSczMicgZmlsbD0nJTIzMUEyMzdFJy8+PHRleHQgeD0nOTYnIHk9JzEzMCcgZm9udC1zaXplPScxMTAnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZpbGw9J3doaXRlJz7wn5SsPC90ZXh0Pjwvc3ZnPiIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%231A237E'/><text x='90' y='125' font-size='100' text-anchor='middle' fill='white'>🔬</text></svg>">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- Service Worker removed: blob URL not supported on iOS -->
+</head>
+<body>
+
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1A237E;color:#fff;padding:12px 16px;z-index:9999;font-family:'Courier New',monospace;font-size:13px;box-shadow:0 -2px 12px rgba(0,0,0,.3)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:22px">📲</span>
+    <span id="install-msg" style="flex:1">Installer sur l'écran d'accueil :<br><strong>Safari → Partager ⬆ → Sur l'écran d'accueil</strong></span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="install-btn" style="display:none;cursor:pointer;background:#22C55E;border:none;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;font-family:inherit;font-weight:700">INSTALLER</button>
+      <button id="install-close" style="cursor:pointer;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 12px;border-radius:6px;font-size:13px;font-family:inherit">✕</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var banner = document.getElementById('install-banner');
+  var closeBtn = document.getElementById('install-close');
+  var installBtn = document.getElementById('install-btn');
+  var dismissed = sessionStorage.getItem('install-dismissed');
+
+  closeBtn.addEventListener('click', function() {
+    banner.style.display = 'none';
+    sessionStorage.setItem('install-dismissed', '1');
+  });
+
+  if (!dismissed) {
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var isStandalone = (window.navigator.standalone === true);
+    if (isIOS && !isStandalone) {
+      banner.style.display = 'block';
+    }
+  }
+
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!sessionStorage.getItem('install-dismissed')) {
+      document.getElementById('install-msg').innerHTML = '<strong>Installer ADRN Audit</strong> sur cet appareil';
+      installBtn.style.display = 'block';
+      banner.style.display = 'block';
+    }
+  });
+
+  installBtn.addEventListener('click', function() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function() {
+        deferredPrompt = null;
+        banner.style.display = 'none';
+      });
+    }
+  });
+})();
+</script>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="logo">ADRN AUDIT</div>
+  <div id="progbar-wrap"><div id="progbar"></div></div>
+  <div id="pct">0%</div>
+  <button class="topbtn" id="btn-reset" onclick="handleReset()" style="border-color:rgba(255,100,100,.6);color:#ffaaaa" title="Effacer toutes les données">RESET</button>
+  <button class="topbtn" id="btn-save" onclick="handleSave()">SAVE</button>
+  <button class="topbtn" id="btn-export" onclick="toggleExport()">EXPORT</button>
+</div>
+
+<!-- EXPORT PANEL -->
+<div id="export-panel">
+  <div id="export-title">FICHE D'AUDIT — RÉSUMÉ</div>
+  <div id="export-content"></div>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+    <button onclick="exportHTML()" style="cursor:pointer;background:rgba(34,197,94,.15);border:1px solid #22C55E;color:#4ADE80;padding:8px 20px;border-radius:6px;font-size:11px;font-family:inherit;letter-spacing:1px">🖨 FICHE IMPRIMABLE (HTML)</button>
+    <button onclick="downloadTxt()" style="cursor:pointer;background:rgba(74,144,217,.1);border:1px solid #2D3748;color:#64748B;padding:8px 16px;border-radius:6px;font-size:11px;font-family:inherit;letter-spacing:1px">⬇ EXPORT .TXT</button>
+  </div>
+</div>
+
+<!-- PHASE NAV -->
+<div id="phasenav"></div>
+
+<!-- CONTENT -->
+<div id="content"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const PHASES = [
+  { id:1, label:"RÉCEPTION", icon:"📥", color:"#00D4FF",
+    sections:[
+      { title:"Informations générales", fields:[
+        {id:"ref",type:"text",label:"Référence dossier",placeholder:"EX : ADRN-2024-0042"},
+        {id:"date",type:"date",label:"Date de réception"},
+        {id:"tech",type:"text",label:"Technicien",placeholder:"Nom & prénom"},
+        {id:"client",type:"text",label:"Client / Service",placeholder:"Nom ou service"},
+      ]},
+      { title:"Provenance", fields:[
+        {id:"provenance",type:"radio",label:"Provenance",options:["Particulier","Entreprise / PME","Parc interne / Collectivité","Association / ONG","Autre"]},
+      ]},
+      { title:"Identification matériel", fields:[
+        {id:"type_eq",type:"radio",label:"Type d'équipement",options:["PC Fixe","PC Portable","Tablette","Tout-en-un","Serveur / NAS","Smartphone","Autre"]},
+        {id:"marque",type:"text",label:"Marque",placeholder:"Dell, HP, Lenovo, Apple…"},
+        {id:"modele",type:"text",label:"Modèle",placeholder:"ex : Latitude 5420"},
+        {id:"sn",type:"text",label:"Numéro de série",placeholder:"S/N"},
+        {id:"imei",type:"text",label:"IMEI (mobile)",placeholder:"*#06#"},
+        {id:"annee",type:"text",label:"Année estimée",placeholder:"ex : 2019"},
+      ]},
+      { title:"État physique", fields:[
+        {id:"chassis",type:"check",label:"Châssis",options:["Très bon état","Rayures légères","Rayures profondes","Fissures / Cassé","Bosses","Oxydation"]},
+        {id:"ecran_etat",type:"check",label:"Écran",options:["Aucun défaut","Rayures","Pixels morts","Taches / Ombres","Fissuré","Rétroéclairage irrégulier"]},
+        {id:"clavier_etat",type:"check",label:"Clavier / Souris",options:["Fonctionnel","Touches manquantes","Touches défectueuses","Usure importante"]},
+        {id:"photos_ok",type:"yn3",label:"Photos état initial réalisées"},
+        {id:"obs_physique",type:"textarea",label:"Observations physiques",placeholder:"Détails, remarques…"},
+      ]},
+    ]
+  },
+  { id:2, label:"DIAGNOSTIC", icon:"🔬", color:"#FF6B35",
+    sections:[
+      { title:"Configuration relevée", fields:[
+        {id:"cpu_model",type:"text",label:"Processeur (CPU)",placeholder:"ex : Intel Core i5-8250U"},
+        {id:"gpu_model",type:"text",label:"Carte graphique (GPU)",placeholder:"ex : Intel UHD 620"},
+        {id:"ram_cap",type:"text",label:"RAM",placeholder:"ex : 8 Go DDR4 2400 MHz"},
+        {id:"storage_info",type:"text",label:"Stockage",placeholder:"ex : 256 Go SSD SATA Samsung"},
+        {id:"ecran_spec",type:"text",label:"Écran",placeholder:"ex : 15.6'' FHD IPS"},
+      ]},
+      { title:"Tests hardware", fields:[
+        {id:"cpu_ok",type:"yn3",label:"CPU — Fonctionnel"},
+        {id:"cpu_temp",type:"text",label:"Température max CPU",placeholder:"°C"},
+        {id:"cpu_charge",type:"yn3",label:"Test de charge CPU réussi (Prime95 / stress-ng)"},
+        {id:"ram_ok",type:"yn3",label:"RAM — MemTest86 OK (0 erreur)"},
+        {id:"smart_ok",type:"radio",label:"État S.M.A.R.T.",options:["Bon (Passed)","Moyen (Warning)","Mauvais (Failed — à remplacer)"]},
+        {id:"storage_read",type:"text",label:"Vitesse lecture",placeholder:"Mo/s"},
+        {id:"storage_write",type:"text",label:"Vitesse écriture",placeholder:"Mo/s"},
+        {id:"gpu_ok",type:"yn3",label:"GPU — Fonctionnel (affichage normal)"},
+        {id:"gpu_artifacts",type:"yn3",label:"Artefacts visuels détectés"},
+        {id:"bat_sante",type:"radio",label:"Batterie — Santé",options:["Bon état (> 80%)","Moyen (60–80%)","À remplacer (< 60%)","N/A"]},
+        {id:"bat_cycles",type:"text",label:"Cycles batterie",placeholder:"nombre"},
+        {id:"pixels_ok",type:"yn3",label:"Écran — Aucun pixel mort"},
+        {id:"tactile_ok",type:"yn3",label:"Dalle tactile fonctionnelle"},
+        {id:"bench",type:"text",label:"Score benchmark",placeholder:"ex : Geekbench SC 850 / MC 3200"},
+      ]},
+      { title:"Connectique & Ports", fields:[
+        {id:"ports",type:"ports",label:"Test des ports",options:["HDMI","DisplayPort","VGA / DVI","USB-A 2.0","USB-A 3.0/3.1","USB-C / Thunderbolt","Ethernet RJ45","Wi-Fi","Bluetooth","Jack audio 3.5mm","Lecteur SD / microSD","Lecteur DVD/CD"]},
+      ]},
+      { title:"Périphériques intégrés", fields:[
+        {id:"clavier_ok",type:"yn3",label:"Clavier — toutes touches fonctionnelles"},
+        {id:"pave_ok",type:"yn3",label:"Pavé tactile fonctionnel"},
+        {id:"micro_ok",type:"yn3",label:"Microphone fonctionnel"},
+        {id:"cam_ok",type:"yn3",label:"Caméra fonctionnelle"},
+        {id:"hp_ok",type:"yn3",label:"Haut-parleurs fonctionnels"},
+      ]},
+      { title:"Logiciel & Sécurité", fields:[
+        {id:"bios_ver",type:"text",label:"Version BIOS",placeholder:"ex : F.24"},
+        {id:"bios_pwd",type:"yn3",label:"Mot de passe BIOS présent (à désactiver)"},
+        {id:"secure_boot",type:"yn3",label:"Secure Boot activé"},
+        {id:"os_installed",type:"text",label:"OS installé",placeholder:"ex : Windows 11 Pro"},
+        {id:"licence_ok",type:"yn3",label:"Licence activée"},
+        {id:"licence_type",type:"radio",label:"Type de licence",options:["OEM","Retail","Volume (MAK/KMS)","Open Source / Gratuit","Non applicable"]},
+        {id:"malware_ok",type:"yn3",label:"Scan malware — aucune menace détectée"},
+        {id:"sfc_ok",type:"yn3",label:"Intégrité système vérifiée (sfc / fsck)"},
+        {id:"obs_diag",type:"textarea",label:"Observations diagnostic",placeholder:"Anomalies, remarques…"},
+      ]},
+    ]
+  },
+  { id:3, label:"EFFACEMENT", icon:"🔐", color:"#A855F7",
+    sections:[
+      { title:"Audit préalable — Supports", fields:[
+        {id:"supports",type:"check",label:"Types de stockage identifiés",options:["HDD (disque mécanique)","SSD SATA","SSD NVMe / M.2","eMMC / Flash","Carte SD / microSD","Mémoire interne mobile"]},
+        {id:"chiffrement",type:"yn3",label:"Chiffrement existant détecté (BitLocker / LUKS / FileVault)"},
+        {id:"chiffrement_type",type:"text",label:"Type de chiffrement détecté",placeholder:"BitLocker / LUKS / FileVault…"},
+      ]},
+      { title:"Méthode d'effacement retenue", fields:[
+        {id:"methode_hdd",type:"check",label:"HDD (disque mécanique)",options:["KillDisk (bootable USB)","ShredOS (bootable USB)","Eraser (Windows)","Nwipe (bootable Linux)"]},
+        {id:"methode_ssd",type:"check",label:"SSD SATA",options:["Parted Magic — Secure Erase ATA","Samsung Magician / Crucial Storage Executive","hdparm --security-erase (Linux)"]},
+        {id:"methode_nvme",type:"check",label:"SSD NVMe / M.2",options:["Parted Magic — NVMe Sanitize","nvme format / nvme sanitize (Linux)","Outil constructeur (WD Dashboard…)"]},
+        {id:"methode_mobile",type:"check",label:"Mobile / Tablette",options:["Réinitialisation usine + suppression FRP","ADB wipe data (Android avancé)","iShredder / Blancco Mobile"]},
+        {id:"norme",type:"radio",label:"Norme appliquée",options:["DoD 5220.22-M (3 passes)","HMG IS5 (Baseline / Enhanced)","NIST 800-88 (Clear / Purge / Destroy)","Gutmann (35 passes)","1 passe aléatoire"]},
+      ]},
+      { title:"Exécution & Certificat", fields:[
+        {id:"efface_ok",type:"yn3",label:"Effacement effectué avec succès"},
+        {id:"verif_ok",type:"yn3",label:"Vérification post-effacement OK (TestDisk / Recuva)"},
+        {id:"duree",type:"text",label:"Durée d'effacement",placeholder:"min / h"},
+        {id:"outil_efface",type:"text",label:"Outil + version utilisés",placeholder:"ex : KillDisk 19.0"},
+        {id:"cert_ok",type:"yn3",label:"Certificat d'effacement généré"},
+        {id:"cert_ref",type:"text",label:"Référence certificat",placeholder:"N° ou chemin d'archivage"},
+        {id:"obs_efface",type:"textarea",label:"Observations effacement",placeholder:"Détails…"},
+      ]},
+    ]
+  },
+  { id:4, label:"FINALISATION", icon:"✅", color:"#22C55E",
+    sections:[
+      { title:"Nettoyage & Maintenance", fields:[
+        {id:"maintenance",type:"check",label:"Actions effectuées",options:["Nettoyage externe","Nettoyage interne / ventilation","Pâte thermique remplacée","Ventilateurs nettoyés / remplacés","Organisation câbles internes","Remplacement composant(s)"]},
+        {id:"composants",type:"text",label:"Composants remplacés",placeholder:"Détail si applicable"},
+      ]},
+      { title:"Installation logicielle", fields:[
+        {id:"os_final",type:"text",label:"OS installé (final)",placeholder:"ex : Windows 11 Pro / Ubuntu 22.04 LTS"},
+        {id:"drivers_ok",type:"yn3",label:"Pilotes installés et à jour"},
+        {id:"maj_ok",type:"yn3",label:"Mises à jour OS appliquées"},
+        {id:"logiciels_ok",type:"yn3",label:"Logiciels de base installés"},
+      ]},
+      { title:"Tests finaux", fields:[
+        {id:"demarrage_ok",type:"yn3",label:"Démarrage normal"},
+        {id:"boot_time",type:"yn3",label:"Temps de démarrage < 60 s"},
+        {id:"charge_ok",type:"yn3",label:"Test de charge global réussi"},
+        {id:"surchauffe",type:"yn3",label:"Surchauffe détectée (> 95°C prolongé)"},
+        {id:"bruit",type:"yn3",label:"Bruit anormal (disque, ventilateur)"},
+        {id:"securite_ok",type:"yn3",label:"Sécurité conforme (Secure Boot, antivirus, MAJ)"},
+        {id:"bench_final",type:"text",label:"Score benchmark",placeholder:"ex : Geekbench SC 850 / MC 3200"},
+        {id:"obs_final",type:"textarea",label:"Observations finales",placeholder:"Remarques générales…"},
+      ]},
+      { title:"Classification & Validation", fields:[
+        {id:"grade",type:"radio",label:"Grade attribué",options:["Grade A — Très bon état (reconditionné premium)","Grade B — Bon état, défauts mineurs","Grade C — Défauts visibles, fonctionnel","Non reconditionnable — pièces détachées","DEEE — recyclage filière"]},
+        {id:"grade_justif",type:"textarea",label:"Justification du grade",placeholder:"Motifs du grade attribué…"},
+        {id:"travaux",type:"textarea",label:"Résumé des travaux effectués",placeholder:"Description complète des opérations réalisées…"},
+        {id:"tech_nom",type:"text",label:"Technicien — Nom",placeholder:"Nom & prénom"},
+        {id:"tech_date",type:"date",label:"Date de validation technicien"},
+        {id:"resp_nom",type:"text",label:"Responsable atelier — Nom",placeholder:"Nom & prénom"},
+        {id:"resp_date",type:"date",label:"Date de validation responsable"},
+      ]},
+    ]
+  }
+];
+
+const TOOLS = {
+  "CPU": [
+    {icon:"🖥",plat:"Windows",items:["CPU-Z","HWMonitor","HWiNFO64","Prime95","MediCat (bootable)"]},
+    {icon:"🍎",plat:"macOS",items:["Macs Fan Control","Geekbench","Intel Power Gadget"]},
+    {icon:"🐧",plat:"Linux",items:["stress-ng","s-tui","lm-sensors","cpufreq-info"]},
+    {icon:"📱",plat:"Tablette",items:["CPU-Z (Android)","AIDA64"]},
+    {icon:"📲",plat:"Smartphone",items:["CPU-Z","AIDA64","AnTuTu"]},
+  ],
+  "RAM": [
+    {icon:"🖥",plat:"Windows",items:["MemTest86 (USB bootable)","MediCat","Windows Memory Diagnostic"]},
+    {icon:"🍎",plat:"macOS",items:["MemTest86 (bootable)","Rember","Memtest Pro"]},
+    {icon:"🐧",plat:"Linux",items:["memtester","MemTest86","dmidecode -t memory"]},
+    {icon:"📱",plat:"Tablette",items:["AIDA64"]},
+    {icon:"📲",plat:"Smartphone",items:["AIDA64","AnTuTu"]},
+  ],
+  "STOCKAGE": [
+    {icon:"🖥",plat:"Windows",items:["CrystalDiskInfo","CrystalDiskMark","HD Tune","MediCat"]},
+    {icon:"🍎",plat:"macOS",items:["DriveDx","Blackmagic Disk Speed","smartmontools (brew)"]},
+    {icon:"🐧",plat:"Linux",items:["smartctl -a /dev/sdX","hdparm -tT /dev/sdX","badblocks"]},
+    {icon:"📱",plat:"Tablette",items:["AIDA64","Disk Diag"]},
+    {icon:"📲",plat:"Smartphone",items:["Disk Diag","AnTuTu Storage"]},
+  ],
+  "GPU": [
+    {icon:"🖥",plat:"Windows",items:["GPU-Z","FurMark","HWiNFO64","MSI Afterburner"]},
+    {icon:"🍎",plat:"macOS",items:["GPU-Z (CrossOver)","Unigine Heaven","FurMark"]},
+    {icon:"🐧",plat:"Linux",items:["glxgears","glmark2","gpu-burn","nvidia-smi / radeontop"]},
+    {icon:"📱",plat:"Tablette",items:["3DMark","GFXBench","AIDA64"]},
+    {icon:"📲",plat:"Smartphone",items:["3DMark","AnTuTu GPU","GFXBench"]},
+  ],
+  "BATTERIE": [
+    {icon:"🖥",plat:"Windows",items:["BatteryInfoView","powercfg /batteryreport","HWiNFO64"]},
+    {icon:"🍎",plat:"macOS",items:["coconutBattery","system_profiler SPPowerDataType"]},
+    {icon:"🐧",plat:"Linux",items:["upower -i /org/.../battery_BAT0","tlp-stat","acpi -bi"]},
+    {icon:"📱",plat:"Tablette",items:["AccuBattery","AIDA64"]},
+    {icon:"📲",plat:"Smartphone",items:["AccuBattery","Battery Guru","*#0228# (Samsung)"]},
+  ],
+  "EFFACEMENT": [
+    {icon:"🖥",plat:"Windows",items:["KillDisk (bootable USB)","ShredOS (bootable USB)","Eraser","Nwipe"]},
+    {icon:"🍎",plat:"macOS",items:["ShredOS (bootable USB)","Disk Utility","hdparm via Linux bootable"]},
+    {icon:"🐧",plat:"Linux",items:["shred -vzn 3 /dev/sdX","nwipe --method=dod_short","nvme format /dev/nvme0"]},
+    {icon:"📱",plat:"Tablette",items:["Réinit. usine + FRP","Blancco Mobile"]},
+    {icon:"📲",plat:"Smartphone",items:["Réinit. usine + FRP","iShredder","Blancco Mobile"]},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let state = {};
+let currentPhase = 0;
+let currentToolTab = Object.keys(TOOLS)[0];
+let toolsOpen = false;
+let exportOpen = false;
+
+// Load from localStorage if available
+try { const s = localStorage.getItem('adrn_audit'); if(s) state = JSON.parse(s); } catch(e){}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function set(id, val) {
+  state[id] = val;
+  updateProgress();
+  try { localStorage.setItem('adrn_audit', JSON.stringify(state)); } catch(e){}
+}
+function get(id) { return state[id]; }
+
+function calcPhaseProgress(ph) {
+  let t=0, f=0;
+  ph.sections.forEach(sec => sec.fields.forEach(field => {
+    if(field.type==='ports') { t+=field.options.length; const v=get(field.id)||{}; f+=Object.values(v).filter(x=>x&&x!==null).length; }
+    else { t++; const v=get(field.id); if(v!==undefined&&v!==''&&v!==null&&!(Array.isArray(v)&&v.length===0)) f++; }
+  }));
+  return t===0?0:Math.round(f/t*100);
+}
+
+function calcTotalProgress() {
+  let t=0, f=0;
+  PHASES.forEach(ph => ph.sections.forEach(sec => sec.fields.forEach(field => {
+    if(field.type==='ports'){t+=field.options.length; const v=get(field.id)||{}; f+=Object.values(v).filter(x=>x&&x!==null).length;}
+    else{t++; const v=get(field.id); if(v!==undefined&&v!==''&&v!==null&&!(Array.isArray(v)&&v.length===0)) f++;}
+  })));
+  return t===0?0:Math.round(f/t*100);
+}
+
+function updateProgress() {
+  const pct = calcTotalProgress();
+  document.getElementById('progbar').style.width = pct+'%';
+  document.getElementById('pct').textContent = pct+'%';
+  PHASES.forEach((ph,i) => {
+    const bar = document.querySelector(`.pnav[data-phase="${i}"] .pbar`);
+    if(bar) bar.style.width = calcPhaseProgress(ph)+'%';
+  });
+}
+
+function e(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if(attrs) Object.entries(attrs).forEach(([k,v]) => { if(k==='class') el.className=v; else if(k==='style') el.style.cssText=v; else el[k]=v; });
+  children.forEach(c => { if(typeof c==='string') el.appendChild(document.createTextNode(c)); else if(c) el.appendChild(c); });
+  return el;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER PHASE NAV
+// ═══════════════════════════════════════════════════════════
+function renderPhaseNav() {
+  const nav = document.getElementById('phasenav');
+  nav.innerHTML = '';
+  PHASES.forEach((ph, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'pnav' + (i===currentPhase?' active':'');
+    btn.dataset.phase = i;
+    btn.style.setProperty('--c', ph.color);
+    btn.innerHTML = `<span class="picon">${ph.icon}</span><span class="plabel">${ph.label}</span><div class="pbar-w"><div class="pbar" style="background:${ph.color};width:${calcPhaseProgress(ph)}%"></div></div>`;
+    btn.onclick = () => { currentPhase=i; renderAll(); };
+    nav.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER FIELD
+// ═══════════════════════════════════════════════════════════
+function renderField(field) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+
+  const lbl = document.createElement('label');
+  lbl.className = 'field-label';
+  lbl.textContent = field.label;
+  wrap.appendChild(lbl);
+
+  const v = get(field.id);
+
+  if(field.type==='text') {
+    const inp = document.createElement('input');
+    inp.className = 'fi'; inp.type='text'; inp.placeholder = field.placeholder||'';
+    inp.value = v||'';
+    inp.addEventListener('input', ev => set(field.id, ev.target.value));
+    wrap.appendChild(inp);
+
+  } else if(field.type==='date') {
+    const inp = document.createElement('input');
+    inp.className = 'fi'; inp.type='date';
+    inp.value = v||'';
+    inp.style.colorScheme='dark';
+    inp.addEventListener('change', ev => set(field.id, ev.target.value));
+    wrap.appendChild(inp);
+
+  } else if(field.type==='textarea') {
+    const ta = document.createElement('textarea');
+    ta.className='fi'; ta.rows=3; ta.placeholder=field.placeholder||'';
+    ta.value = v||'';
+    ta.addEventListener('input', ev => set(field.id, ev.target.value));
+    wrap.appendChild(ta);
+
+  } else if(field.type==='yn3') {
+    const row = document.createElement('div'); row.className='yn3';
+    [['yes','OUI ✓'],['no','NON ✗'],['na','N/A']].forEach(([k,l]) => {
+      const btn = document.createElement('button');
+      btn.className = 'ynb' + (v===k?' '+k:'');
+      btn.textContent = l;
+      btn.onclick = () => { set(field.id, v===k?null:k); renderContent(); };
+      row.appendChild(btn);
+    });
+    wrap.appendChild(row);
+
+  } else if(field.type==='radio') {
+    const row = document.createElement('div'); row.className='opts';
+    (field.options||[]).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn' + (v===opt?' radio-active':'');
+      btn.textContent = opt;
+      btn.onclick = () => { set(field.id, v===opt?null:opt); renderContent(); };
+      row.appendChild(btn);
+    });
+    wrap.appendChild(row);
+
+  } else if(field.type==='check') {
+    const row = document.createElement('div'); row.className='opts';
+    (field.options||[]).forEach(opt => {
+      const btn = document.createElement('button');
+      const cur = v||[];
+      const active = cur.includes(opt);
+      btn.className = 'opt-btn' + (active?' check-active':'');
+      btn.innerHTML = (active?'☑':'☐')+' '+opt;
+      btn.onclick = () => {
+        const c=get(field.id)||[];
+        set(field.id, active?c.filter(x=>x!==opt):[...c,opt]);
+        renderContent();
+      };
+      row.appendChild(btn);
+    });
+    wrap.appendChild(row);
+
+  } else if(field.type==='ports') {
+    (field.options||[]).forEach(port => {
+      const pv = (v||{})[port];
+      const row = document.createElement('div'); row.className='port-row';
+      const nm = document.createElement('span'); nm.className='port-name'; nm.textContent=port;
+      const okBtn = document.createElement('button');
+      okBtn.className='port-btn'+(pv==='ok'?' ok':''); okBtn.textContent='✓ OK';
+      okBtn.onclick = () => { const cur=get(field.id)||{}; set(field.id,{...cur,[port]:pv==='ok'?null:'ok'}); renderContent(); };
+      const koBtn = document.createElement('button');
+      koBtn.className='port-btn'+(pv==='ko'?' ko':''); koBtn.textContent='✗ Défaut';
+      koBtn.onclick = () => { const cur=get(field.id)||{}; set(field.id,{...cur,[port]:pv==='ko'?null:'ko'}); renderContent(); };
+      const noteInp = document.createElement('input');
+      noteInp.className='port-note'; noteInp.placeholder='note…';
+      noteInp.value=((v||{})[port+'_note'])||'';
+      noteInp.addEventListener('input', ev => { const cur=get(field.id)||{}; set(field.id,{...cur,[port+'_note']:ev.target.value}); });
+      row.appendChild(nm); row.appendChild(okBtn); row.appendChild(koBtn); row.appendChild(noteInp);
+      wrap.appendChild(row);
+    });
+  }
+
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER TOOLS
+// ═══════════════════════════════════════════════════════════
+function renderTools(ph) {
+  const sec = document.createElement('div'); sec.id='tools-section';
+  sec.className='section';
+
+  const hdr = document.createElement('div'); hdr.className='section-hdr';
+  const stripe = document.createElement('div'); stripe.className='section-stripe'; stripe.style.background='#4A5568';
+  const title = document.createElement('span'); title.className='section-title'; title.textContent='AIDE-MÉMOIRE OUTILS';
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className='topbtn'; toggleBtn.style.marginLeft='auto'; toggleBtn.style.fontSize='10px'; toggleBtn.style.padding='4px 10px';
+  toggleBtn.textContent = toolsOpen?'FERMER':'AFFICHER';
+  toggleBtn.onclick = () => { toolsOpen=!toolsOpen; renderContent(); };
+  hdr.appendChild(stripe); hdr.appendChild(title); hdr.appendChild(toggleBtn);
+  sec.appendChild(hdr);
+
+  if(toolsOpen) {
+    const body = document.createElement('div'); body.className='section-body';
+
+    const tabs = document.createElement('div'); tabs.className='tool-tabs';
+    Object.keys(TOOLS).forEach(k => {
+      const tb = document.createElement('button');
+      tb.className='tool-tab'+(currentToolTab===k?' active':'');
+      tb.textContent=k;
+      tb.onclick = () => { currentToolTab=k; renderContent(); };
+      tabs.appendChild(tb);
+    });
+    body.appendChild(tabs);
+
+    const toolData = TOOLS[currentToolTab]||[];
+    toolData.forEach(row => {
+      const r = document.createElement('div'); r.className='tool-row';
+      const plat = document.createElement('div'); plat.className='tool-plat';
+      plat.innerHTML=`<span>${row.icon}</span><span class="tool-plat-name">${row.plat}</span>`;
+      const tags = document.createElement('div'); tags.className='tool-tags';
+      row.items.forEach(item => {
+        const tag = document.createElement('span'); tag.className='tool-tag'; tag.textContent=item;
+        tags.appendChild(tag);
+      });
+      r.appendChild(plat); r.appendChild(tags);
+      body.appendChild(r);
+    });
+
+    sec.appendChild(body);
+  }
+
+  return sec;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER CONTENT
+// ═══════════════════════════════════════════════════════════
+function renderContent() {
+  const ph = PHASES[currentPhase];
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  // Phase header
+  const hdr = document.createElement('div'); hdr.className='phase-hdr';
+  const num = document.createElement('div'); num.className='phase-num'; num.style.color=ph.color; num.textContent='0'+ph.id;
+  const info = document.createElement('div');
+  const t = document.createElement('div'); t.className='phase-title'; t.style.color=ph.color; t.textContent=ph.label;
+  const m = document.createElement('div'); m.className='phase-meta'; m.textContent=calcPhaseProgress(ph)+'% complété · '+ph.sections.length+' sections';
+  info.appendChild(t); info.appendChild(m);
+  hdr.appendChild(num); hdr.appendChild(info);
+  content.appendChild(hdr);
+
+  // Sections
+  ph.sections.forEach(sec => {
+    const card = document.createElement('div'); card.className='section';
+    const shdr = document.createElement('div'); shdr.className='section-hdr';
+    const stripe = document.createElement('div'); stripe.className='section-stripe'; stripe.style.background=ph.color;
+    const stitle = document.createElement('span'); stitle.className='section-title'; stitle.textContent=sec.title;
+    shdr.appendChild(stripe); shdr.appendChild(stitle);
+    card.appendChild(shdr);
+    const sbody = document.createElement('div'); sbody.className='section-body';
+    sec.fields.forEach(field => sbody.appendChild(renderField(field)));
+    card.appendChild(sbody);
+    content.appendChild(card);
+  });
+
+  // Tools panel
+  content.appendChild(renderTools(ph));
+
+  // Nav buttons
+  const nav = document.createElement('div'); nav.id='navbtns';
+  const prev = document.createElement('button'); prev.className='navbtn'; prev.textContent='← PRÉCÉDENT'; prev.disabled=currentPhase===0;
+  prev.onclick = () => { if(currentPhase>0){currentPhase--; renderAll(); window.scrollTo(0,0);} };
+  const indicator = document.createElement('div'); indicator.id='phase-indicator'; indicator.textContent='PHASE '+(currentPhase+1)+' / '+PHASES.length;
+  const next = document.createElement('button');
+  if(currentPhase<PHASES.length-1) {
+    next.className='navbtn next'; next.style.setProperty('--phase-color',ph.color); next.textContent='SUIVANT →';
+    next.onclick = () => { currentPhase++; renderAll(); window.scrollTo(0,0); };
+  } else {
+    next.className='navbtn export-btn'; next.textContent='EXPORTER LA FICHE ↗';
+    next.onclick = () => { exportOpen=true; renderExport(); document.getElementById('export-panel').classList.add('open'); window.scrollTo(0,0); };
+  }
+  nav.appendChild(prev); nav.appendChild(indicator); nav.appendChild(next);
+  content.appendChild(nav);
+
+  updateProgress();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER EXPORT
+// ═══════════════════════════════════════════════════════════
+function renderExport() {
+  const container = document.getElementById('export-content');
+  container.innerHTML = '';
+  PHASES.forEach(ph => {
+    const hasData = ph.sections.some(sec => sec.fields.some(f => { const v=get(f.id); return v!==undefined&&v!==''&&v!==null&&!(Array.isArray(v)&&v.length===0)&&!(typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0); }));
+    if(!hasData) return;
+    const sdiv = document.createElement('div'); sdiv.className='exp-section';
+    const shdr = document.createElement('div'); shdr.className='exp-section-hdr'; shdr.style.color=ph.color; shdr.textContent=ph.icon+' PHASE '+ph.id+' — '+ph.label;
+    sdiv.appendChild(shdr);
+    ph.sections.forEach(sec => sec.fields.forEach(f => {
+      const v=get(f.id);
+      if(!v&&v!==0) return;
+      let display='';
+      if(f.type==='check'&&Array.isArray(v)) display=v.join(' · ');
+      else if(f.type==='ports'&&typeof v==='object') display=Object.entries(v).filter(([k,s])=>!k.endsWith('_note')&&s).map(([p,s])=>`${p}:${s}`).join(' · ');
+      else display=v;
+      if(!display) return;
+      const row=document.createElement('div'); row.className='exp-row';
+      const lbl=document.createElement('span'); lbl.className='exp-label'; lbl.textContent=f.label;
+      const val=document.createElement('span'); val.className='exp-val'; val.textContent=display;
+      row.appendChild(lbl); row.appendChild(val);
+      sdiv.appendChild(row);
+    }));
+    container.appendChild(sdiv);
+  });
+}
+
+function downloadTxt() {
+  const lines = ["FICHE D'AUDIT ADRN — RECONDITIONNEMENT", "=".repeat(52), "Généré le : "+new Date().toLocaleDateString("fr-FR")+" à "+new Date().toLocaleTimeString("fr-FR"), ""];
+  PHASES.forEach(ph => {
+    lines.push(""); lines.push("══ PHASE "+ph.id+" — "+ph.label);
+    ph.sections.forEach(sec => {
+      lines.push(""); lines.push("  ▸ "+sec.title);
+      sec.fields.forEach(f => {
+        const v=get(f.id); if(!v&&v!==0) return;
+        let display="";
+        if(f.type==="check"&&Array.isArray(v)) display=v.join(", ");
+        else if(f.type==="ports"&&typeof v==="object") display=Object.entries(v).filter(([k,s])=>!k.endsWith("_note")&&s).map(([p,s])=>`${p}:${s||"—"}`).join(", ");
+        else display=String(v);
+        if(display) lines.push("    "+f.label+": "+display);
+      });
+    });
+  });
+  lines.push(""); lines.push("─".repeat(52));
+  lines.push("Programmes ADRN — Phases 1 · 2 · 3");
+  lines.push("KillDisk · ShredOS · MemTest86 · CrystalDiskInfo · GLPI");
+  const blob = new Blob([lines.join("\n")], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="audit_ADRN_"+(get("ref")||"export")+"_"+new Date().toISOString().slice(0,10)+".txt"; a.click();
+}
+
+function exportHTML() {
+  const ref = get("ref") || "—";
+  const date = get("date") || new Date().toLocaleDateString("fr-FR");
+  const tech = get("tech") || "—";
+  const client = get("client") || "—";
+  const grade = get("grade") || "";
+  const now = new Date().toLocaleDateString("fr-FR") + " à " + new Date().toLocaleTimeString("fr-FR");
+
+  const PHASE_COLORS = ["#1565C0","#E65100","#6A1B9A","#2E7D32"];
+  const PHASE_LIGHTS = ["#E3F2FD","#FFF3E0","#F3E5F5","#E8F5E9"];
+
+  function yn3Label(v) {
+    if(v==="yes") return '<span style="color:#2E7D32;font-weight:700">✓ OUI</span>';
+    if(v==="no")  return '<span style="color:#C62828;font-weight:700">✗ NON</span>';
+    if(v==="na")  return '<span style="color:#555;font-style:italic">N/A</span>';
+    return "—";
+  }
+  function fieldValue(f) {
+    const v = get(f.id);
+    if(!v && v !== 0) return null;
+    if(f.type==="yn3") return yn3Label(v);
+    if(f.type==="check" && Array.isArray(v)) return v.map(x=>`<span class="tag">${x}</span>`).join(" ");
+    if(f.type==="radio") return `<span class="tag radio">${v}</span>`;
+    if(f.type==="textarea") return `<span style="white-space:pre-wrap">${String(v).replace(/</g,"&lt;")}</span>`;
+    if(f.type==="ports" && typeof v==="object") {
+      const rows = Object.entries(v).filter(([k])=>!k.endsWith("_note")).map(([port,st])=>{
+        const note = v[port+"_note"] || "";
+        const stHtml = st==="ok"?'<span style="color:#2E7D32;font-weight:700">✓ OK</span>':st==="ko"?'<span style="color:#C62828;font-weight:700">✗ Défaut</span>':"—";
+        return `<tr><td style="padding:4px 10px;border-bottom:1px solid #eee">${port}</td><td style="padding:4px 10px;border-bottom:1px solid #eee">${stHtml}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;color:#555;font-style:italic">${note}</td></tr>`;
+      });
+      if(!rows.length) return null;
+      return `<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr><th style="text-align:left;padding:4px 10px;background:#F5F5F5;border-bottom:2px solid #ddd">Port</th><th style="text-align:left;padding:4px 10px;background:#F5F5F5;border-bottom:2px solid #ddd">État</th><th style="text-align:left;padding:4px 10px;background:#F5F5F5;border-bottom:2px solid #ddd">Note</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+    }
+    return String(v).replace(/</g,"&lt;");
+  }
+
+  let phasesHtml = "";
+  PHASES.forEach((ph, pi) => {
+    const col = PHASE_COLORS[pi], light = PHASE_LIGHTS[pi];
+    let sectionsHtml = "";
+    ph.sections.forEach(sec => {
+      let fieldsHtml = "";
+      sec.fields.forEach(f => {
+        const val = fieldValue(f);
+        if(!val) return;
+        const isBlock = ["textarea","ports","check"].includes(f.type);
+        fieldsHtml += isBlock
+          ? `<div class="field-block"><div class="field-lbl">${f.label}</div><div class="field-val-block">${val}</div></div>`
+          : `<div class="field-row"><div class="field-lbl">${f.label}</div><div class="field-val">${val}</div></div>`;
+      });
+      if(!fieldsHtml) return;
+      sectionsHtml += `<div class="sec-card"><div class="sec-title">${sec.title}</div>${fieldsHtml}</div>`;
+    });
+    if(!sectionsHtml) return;
+    phasesHtml += `
+      <div class="phase-block" style="--pc:${col};--pl:${light}">
+        <div class="phase-header">
+          <span class="phase-num">0${ph.id}</span>
+          <span class="phase-icon">${ph.icon}</span>
+          <span class="phase-name">${ph.label}</span>
+        </div>
+        ${sectionsHtml}
+      </div>`;
+  });
+
+  const gradeColor = grade.startsWith("Grade A")?"#1B5E20":grade.startsWith("Grade B")?"#1565C0":grade.startsWith("Grade C")?"#E65100":grade.includes("pièces")?"#6A1B9A":"#B71C1C";
+
+  const doc = `<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fiche Audit ADRN — ${ref}</title>
+<style>
+  @media print{.no-print{display:none}body{margin:0}@page{margin:15mm 12mm}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1A1A1A;background:#fff;line-height:1.5}
+  /* HEADER */
+  .doc-header{background:#1A237E;color:#fff;padding:18px 28px 14px;display:flex;justify-content:space-between;align-items:flex-start}
+  .doc-header-left h1{font-size:20px;letter-spacing:2px;margin-bottom:4px}
+  .doc-header-left p{font-size:11px;opacity:.8}
+  .doc-header-right{text-align:right;font-size:11px;opacity:.85;line-height:1.8}
+  /* META BANNER */
+  .meta-banner{background:#E8EAF6;border-bottom:2px solid #1A237E;padding:10px 28px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .meta-item label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#555;display:block}
+  .meta-item span{font-size:13px;font-weight:700;color:#1A237E}
+  /* GRADE BADGE */
+  .grade-banner{padding:12px 28px;background:var(--gb);border-bottom:3px solid var(--gc);display:flex;align-items:center;gap:12px}
+  .grade-badge{background:var(--gc);color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:1px}
+  .grade-justif{font-size:12px;color:#333;flex:1}
+  /* CONTENT */
+  .content{padding:20px 28px}
+  /* PHASE */
+  .phase-block{margin-bottom:28px;border:1.5px solid var(--pc);border-radius:8px;overflow:hidden}
+  .phase-header{background:var(--pc);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:10px}
+  .phase-num{font-size:28px;font-weight:900;opacity:.4;line-height:1}
+  .phase-icon{font-size:18px}
+  .phase-name{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+  /* SECTION */
+  .sec-card{border-top:1px solid #E0E0E0;padding:12px 18px}
+  .sec-card:first-of-type{border-top:none}
+  .sec-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--pc);font-weight:700;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--pl)}
+  /* FIELDS */
+  .field-row{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid #F5F5F5}
+  .field-row:last-child{border-bottom:none}
+  .field-lbl{min-width:220px;max-width:220px;font-size:11px;color:#555;flex-shrink:0}
+  .field-val{font-size:13px;color:#1A1A1A;font-weight:500}
+  .field-block{padding:6px 0;border-bottom:1px solid #F5F5F5}
+  .field-val-block{font-size:13px;color:#1A1A1A;margin-top:4px}
+  /* TAGS */
+  .tag{display:inline-block;background:#E8EAF6;color:#283593;border:1px solid #9FA8DA;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px}
+  .tag.radio{background:#FFF3E0;color:#E65100;border-color:#FFCC80}
+  /* FOOTER */
+  .doc-footer{margin-top:28px;border-top:1px solid #DDD;padding:10px 28px;font-size:10px;color:#888;display:flex;justify-content:space-between}
+  /* PRINT BTN */
+  .print-bar{background:#F5F5F5;padding:12px 28px;border-bottom:1px solid #DDD;display:flex;gap:10px;align-items:center}
+  .print-btn{cursor:pointer;background:#1A237E;color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:12px;font-family:Arial,sans-serif;letter-spacing:1px}
+  .print-btn:hover{background:#283593}
+  .close-btn{cursor:pointer;background:#fff;color:#555;border:1px solid #ccc;padding:8px 16px;border-radius:6px;font-size:12px;font-family:Arial,sans-serif}
+</style>
+</head>
+<body>
+<div class="print-bar no-print">
+  <button class="print-btn" onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button>
+  <button class="close-btn" onclick="window.close()">✕ Fermer</button>
+  <span style="font-size:11px;color:#888;margin-left:8px">Pour enregistrer en PDF : dans la boîte d'impression, choisir "Enregistrer en PDF"</span>
+</div>
+<div class="doc-header">
+  <div class="doc-header-left">
+    <h1>FICHE D'AUDIT ADRN</h1>
+    <p>Reconditionnement d'équipement numérique — Phases 1 · 2 · 3</p>
+  </div>
+  <div class="doc-header-right">
+    Réf : <strong>${ref}</strong><br>
+    Technicien : <strong>${tech}</strong><br>
+    Généré le ${now}
+  </div>
+</div>
+<div class="meta-banner">
+  <div class="meta-item"><label>Référence</label><span>${ref}</span></div>
+  <div class="meta-item"><label>Date réception</label><span>${date}</span></div>
+  <div class="meta-item"><label>Technicien</label><span>${tech}</span></div>
+  <div class="meta-item"><label>Client / Service</label><span>${client}</span></div>
+</div>
+${grade ? `<div class="grade-banner" style="--gc:${gradeColor};--gb:${gradeColor}18"><span class="grade-badge">${grade.split("—")[0].trim()}</span><span class="grade-justif">${grade}${get("grade_justif") ? " — " + get("grade_justif") : ""}</span></div>` : ""}
+<div class="content">${phasesHtml}</div>
+<div class="doc-footer">
+  <span>Programmes ADRN — KillDisk · ShredOS · MemTest86 · CrystalDiskInfo · GLPI / Snipe-IT</span>
+  <span>Page 1</span>
+</div>
+</body></html>`;
+
+  const blob = new Blob([doc], {type:"text/html;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "fiche_ADRN_"+(get("ref")||"export")+"_"+new Date().toISOString().slice(0,10)+".html";
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════
+function handleSave() {
+  try { localStorage.setItem('adrn_audit', JSON.stringify(state)); } catch(e){}
+  const btn = document.getElementById('btn-save');
+  btn.textContent='✓ SAUVÉ'; btn.classList.add('saved');
+  setTimeout(() => { btn.textContent='SAVE'; btn.classList.remove('saved'); }, 2000);
+}
+
+function handleReset() {
+  // Show inline confirmation modal
+  const existing = document.getElementById('reset-modal');
+  if(existing) { existing.remove(); return; }
+  const modal = document.createElement('div');
+  modal.id = 'reset-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#fff;border:2px solid #EF4444;border-radius:12px;padding:32px 36px;max-width:380px;width:90%;text-align:center;box-shadow:0 0 40px rgba(239,68,68,.2)">
+      <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#C62828;letter-spacing:1px;margin-bottom:8px">RÉINITIALISER LA FICHE ?</div>
+      <div style="font-family:'Courier New',monospace;font-size:12px;color:#555;margin-bottom:24px;line-height:1.6">Toutes les données saisies seront<br>définitivement effacées.</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="document.getElementById('reset-modal').remove()"
+          style="cursor:pointer;background:#F5F5F5;border:1px solid #ccc;color:#555;padding:9px 22px;border-radius:7px;font-size:12px;font-family:inherit;letter-spacing:1px">
+          ANNULER
+        </button>
+        <button onclick="confirmReset()"
+          style="cursor:pointer;background:rgba(239,68,68,.15);border:1px solid #EF4444;color:#F87171;padding:9px 22px;border-radius:7px;font-size:12px;font-family:inherit;letter-spacing:1px;font-weight:700">
+          EFFACER TOUT
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Close on backdrop click
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+}
+
+function confirmReset() {
+  state = {};
+  currentPhase = 0;
+  toolsOpen = false;
+  exportOpen = false;
+  try { localStorage.removeItem('adrn_audit'); } catch(e){}
+  document.getElementById('reset-modal').remove();
+  document.getElementById('export-panel').classList.remove('open');
+  document.getElementById('btn-export').classList.remove('active');
+  renderAll();
+}
+
+function toggleExport() {
+  exportOpen=!exportOpen;
+  const panel=document.getElementById('export-panel');
+  const btn=document.getElementById('btn-export');
+  if(exportOpen) { renderExport(); panel.classList.add('open'); btn.classList.add('active'); }
+  else { panel.classList.remove('open'); btn.classList.remove('active'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+function renderAll() { renderPhaseNav(); renderContent(); }
+renderAll();
+</script>
+</body>
+</html>
